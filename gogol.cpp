@@ -8,7 +8,7 @@ public:
     {
         sAppName = "G.o.G.o.L.";
     }
-    
+
 public:
 
     // Game Variables
@@ -27,7 +27,7 @@ public:
     int COLOR = 255;//          UI Color For Fading
     int menu_index = 0;//       Selection Index
     int YOFF = 20;//            Y Offset
-    
+
     // Game States
     int sPLAY = 0;
     int sSCORE = 1;
@@ -543,7 +543,7 @@ public:
             {
                 if (GetKey(olc::Key::W).bPressed || GetKey(olc::Key::UP).bPressed) if (menu_index > 0) menu_index -= 1;
                 if (GetKey(olc::Key::S).bPressed || GetKey(olc::Key::DOWN).bPressed) if (menu_index < 2) menu_index += 1;
-                
+
                 if (GetKey(olc::Key::ENTER).bPressed)
                 {
                     if (menu_index == 0) state = sPLAY; StartGame();
