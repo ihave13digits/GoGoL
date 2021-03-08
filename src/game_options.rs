@@ -1,4 +1,4 @@
-struct GameOptions {
+pub struct GameOptions {
     pub danger: bool,    //      Shading Toggle
     pub paused: bool,    //      Game Updates
     pub waiting: bool,   //     Menu Updates
@@ -9,9 +9,9 @@ struct GameOptions {
     pub seed: u32,       //             Game Seed
     pub tick: u32,       //             Game Tick
     pub speed: u32,      //            Tick Speed
-    pub WIDTH: u32,      //          Horizontal Cells (World)
-    pub HEIGHT: u32,     //         Vertical Cells (World)
-    pub COLOR: u32,      //          UI Color For Fading
+    pub width: u32,      //          Horizontal Cells (World)
+    pub height: u32,     //         Vertical Cells (World)
+    pub color: u32,      //          UI Color For Fading
     pub menu_index: u32, //       Selection Index
-    pub YOFF: u32,       //            Y Offset
+    pub yoff: u32,       //            Y Offset
 }

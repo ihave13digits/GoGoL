@@ -1,14 +1,16 @@
+use crate::Direction;
+
 pub struct LevelData {
-    pub lCONDITION: i32,
-    pub lIS_BLIND: i32,
-    pub lMIN: i32,
-    pub lMAX: i32,
-    pub lTOL: i32,
-    pub lW: i32,
-    pub lH: i32,
-    pub lTIME: i32,
-    pub lDENSE: i32,
-    pub lSIZE: i32,
-    pub lSPEED: i32,
-    pub lDIRECTION: i32,
+    pub condition: i32,
+    pub is_blind: i32,
+    pub min: i32,
+    pub max: i32,
+    pub tol: i32,
+    pub width: i32,
+    pub height: i32,
+    pub time: i32,
+    pub dense: i32,
+    pub size: i32,
+    pub speed: i32,
+    pub direction: Direction,
 }

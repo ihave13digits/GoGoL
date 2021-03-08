@@ -1,5 +1,5 @@
 [package]
-name = "GoGoL"
+name = "gogol"
 version = "0.1.0"
 authors = ["able <abl3theabove@gmail.com>"]
 edition = "2018"
