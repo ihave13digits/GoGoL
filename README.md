@@ -1,2 +1,2 @@
 # GoGoL
-A hypercasual game based on Game of Life, written in C++ with olcPixelGameEngine
+A hypercasual game based on Game of Life, rewritten in ~~C++~~ Rust with ~~olcPixelGameEngine~~
