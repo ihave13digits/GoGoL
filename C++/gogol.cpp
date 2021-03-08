@@ -12,6 +12,7 @@ public:
 public:
 
     // Game Variables
+    bool safety = false;//      Shading Toggle
     bool danger = false;//      Shading Toggle
     bool paused = false;//      Game Updates
     bool waiting = false;//     Menu Updates
