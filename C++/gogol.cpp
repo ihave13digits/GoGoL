@@ -54,19 +54,24 @@ public:
     int lDIRECTION = 11;
 
     // Game Levels
-    int total_levels = 10;
-    int game_level[10][12] = {
+    int total_levels = 15;
+    int game_level[15][12] = {
         //CNDTN  BLIND    MIN     MAX      TOL    WIDTH   HEIGHT  TIME   DENSE    SIZE    SPD     DIR
-        //{   1,     0,     750,    250,     500,    512,    256,    30,     4,      0,      1,      0    },// test level
+        //{   2,     0,     5000,   7500,    500,    512,    256,    45,     10,     3,      1,      0    },// test level
         {   1,     0,     0,      0,       250,    512,    256,    15,     1,      0,      2,      0    },
         {   0,     0,     0,      750,     250,    512,    256,    15,     1,      1,      2,      0    },
-        {   0,     0,     0,      500,     250,    512,    256,    15,     2,      0,      1,      0    },
+        {   0,     1,     0,      500,     250,    512,    256,    15,     2,      0,      1,      0    },
         {   0,     0,     0,      250,     250,    512,    256,    15,     3,      0,      1,      0    },
         {   2,     0,     0,      500,     250,    512,    256,    15,     3,      0,      1,      0    },
-        {   1,     0,     750,    250,     500,    512,    256,    30,     4,      0,      1,      0    },
-        {   1,     1,     500,    0,       250,    512,    256,    15,     5,      1,      1,      0    },
+        {   1,     1,     750,    0,       250,    512,    256,    30,     4,      0,      1,      0    },
+        {   1,     0,     500,    0,       250,    512,    256,    30,     5,      1,      1,      0    },
         {   2,     1,     500,    1000,    500,    512,    256,    30,     5,      0,      1,      0    },
         {   0,     0,     0,      2000,    500,    512,    256,    30,     6,      1,      1,      0    },
+        {   2,     0,     2000,   3000,    500,    512,    256,    30,     7,      2,      1,      0    },
+        {   1,     0,     3000,   0,       500,    512,    256,    45,     8,      2,      1,      0    },
+        {   0,     1,     0,      5000,    500,    512,    256,    45,     9,      2,      1,      0    },
+        {   2,     0,     3000,   4000,    500,    512,    256,    45,     8,      3,      1,      0    },
+        {   2,     0,     5000,   7500,    500,    512,    256,    45,     10,     3,      1,      0    },
         {   2,     0,     5500,   7500,    500,    512,    256,    60,     11,     4,      2,      0    }
     };
 
@@ -135,8 +140,9 @@ public:
                 {
                     if (matrix[x][y])
                     {
-                        if (!danger) Draw(x, y+YOFF, olc::WHITE);
+                        if (!danger && !safety) Draw(x, y+YOFF, olc::WHITE);
                         if (danger) Draw(x, y+YOFF, olc::RED);
+                        if (safety) Draw(x, y+YOFF, olc::GREEN);
                     }
                 }
             }
@@ -155,8 +161,9 @@ public:
                     if (!is_blind) grey = int(255-(255/(s+1)));
                     if (matrix[lx][ly])
                     {
+                        if (safety) Draw(lx, ly+YOFF, olc::Pixel(0, grey, 0));
                         if (danger) Draw(lx, ly+YOFF, olc::Pixel(grey, 0, 0));
-                        if (!danger) Draw(lx, ly+YOFF, olc::Pixel(grey, grey, grey));
+                        if (!danger && !safety) Draw(lx, ly+YOFF, olc::Pixel(grey, grey, grey));
                     }
                 }
             }
@@ -200,16 +207,18 @@ public:
 
     void DrawHUD()
     {
+        FillRect(0, 0, WIDTH, YOFF, olc::Pixel(16, 16, 16));
         int pop = GetPop();
         std::string level_text;
         if (keep_above && !keep_between) level_text = "> "+std::to_string(minimum);
         if (!keep_above && !keep_between) level_text = "< "+std::to_string(maximum);
         if (keep_between) level_text = "> "+std::to_string(minimum)+" && < "+std::to_string(maximum);
 
-        DrawStringDecal({0, 0}, level_text, olc::YELLOW, {1.5f, 1.5f});
-        DrawStringDecal({416, 0}, "Score: "+std::to_string(points)+"/"+std::to_string(score), olc::YELLOW, {0.5f, 0.5f});
-        DrawStringDecal({416, 5}, "Time Left: "+std::to_string(int(timer)), olc::YELLOW, {0.5f, 0.5f});
-        DrawStringDecal({416, 10}, "Population: "+std::to_string(pop), olc::YELLOW, {0.5f, 0.5f});
+        DrawStringDecal({0, 0}, "x"+std::to_string(lives), olc::WHITE, {1.5f, 1.5f});
+        DrawStringDecal({32, 0}, level_text, olc::YELLOW, {1.5f, 1.5f});
+        DrawStringDecal({416, 0}, "Score: "+std::to_string(points)+"/"+std::to_string(score), olc::WHITE, {0.5f, 0.5f});
+        DrawStringDecal({416, 5}, "Time Left: "+std::to_string(int(timer)), olc::WHITE, {0.5f, 0.5f});
+        DrawStringDecal({416, 10}, "Population: "+std::to_string(pop), olc::WHITE, {0.5f, 0.5f});
     }
 
     void DrawMenu()
@@ -368,7 +377,6 @@ public:
 
     void StartLevel(bool passed)
     {
-        exceeded = 0;
         generations = 0;
         Clear(olc::BLACK);
         if (!passed)
@@ -379,9 +387,11 @@ public:
         }
         if (passed)
         {
+            if (exceeded == 0) lives++;
             level++;
             state = sSCORE;
         }
+        exceeded = 0;
         if (level < total_levels)
         {
             if (game_level[level][lCONDITION] == 0) keep_above = false; keep_between = false;
@@ -408,7 +418,7 @@ public:
 
     void CleanSlate()
     {
-        lives = 3;
+        lives = 1;
         speed = 0;
         points = 0;
         score = 0;
@@ -455,25 +465,54 @@ public:
         int pop = GetPop();
         // Check Level Conditions
         danger = false;
+        safety = false;
         if (generations > begin_calc)
         {
-            if (keep_above && !keep_between) if (pop < minimum)
+            if (keep_above && !keep_between)
             {
-                if (points > 0) points--;
-                exceeded++;
-                danger = true;
+                if (pop < minimum)
+                {
+                    if (points > 0) points--;
+                    if (exceeded < tolerance) exceeded++;
+                    danger = true;
+                }
+                if (pop < int(minimum+(minimum/3)))
+                {
+                    if (exceeded > 0) exceeded--;
+                    points++;
+                    safety = true;
+                }
             }
-            if (!keep_above && !keep_between) if (pop > maximum)
+            if (!keep_above && !keep_between)
             {
-                if (points > 0) points--;
-                exceeded++;
-                danger = true;
+                if (pop > maximum)
+                {
+                    if (points > 0) points--;
+                    if (exceeded < tolerance) exceeded++;
+                    danger = true;
+                }
+                if (pop > int(maximum/3) && pop < int(maximum-(maximum/3)))
+                {
+                    if (exceeded > 0) exceeded--;
+                    points++;
+                    safety = true;
+                }
             }
-            if (keep_between) if (pop < minimum || pop > maximum)
+            if (keep_between)
             {
-                if (points > 0) points--;
-                exceeded++;
-                danger = true;
+                int diff = maximum-minimum;
+                if (pop < minimum || pop > maximum)
+                {
+                    if (points > 0) points--;
+                    if (exceeded < tolerance) exceeded++;
+                    danger = true;
+                }
+                if (pop > int(minimum+(diff/3)) && pop < int(maximum-(diff/3)))
+                {
+                    if (exceeded > 0) exceeded--;
+                    points++;
+                    safety = true;
+                }
             }
         }
         if (exceeded < tolerance) passed = true;
