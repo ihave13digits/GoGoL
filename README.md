@@ -2,10 +2,8 @@
 
 A hypercasual game based on John Conway's Game of Life
 
-## written in:
+## implemented with:
 
-###### C++ with olcPixelGameEngine (ihave13digits)
-
-## rewritten in:
+###### C++ and olcPixelGameEngine (ihave13digits)
 
 ###### Rust (AbleTheAbove)
