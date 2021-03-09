@@ -191,8 +191,15 @@ public:
             waiting = false; state = sPLAY;
         }
         Clear(olc::BLACK);
-        DrawStringDecal({212, 124}, "Points: "+std::to_string(points), olc::YELLOW, {1.0f, 1.0f});
-        DrawStringDecal({212, 132}, "Score: "+std::to_string(score), olc::YELLOW, {1.0f, 1.0f});
+
+        std::string pt = "Points: "+std::to_string(points);
+        std::string sc = "Score: "+std::to_string(score);
+
+        float PT = GetOffset(pt, 8);
+        float SC = GetOffset(sc, 8);
+
+        DrawStringDecal({PT, 124}, pt, olc::YELLOW, {1.0f, 1.0f});
+        DrawStringDecal({SC, 132}, sc, olc::YELLOW, {1.0f, 1.0f});
         if (level > total_levels) state = sEND;
     }
 
@@ -201,7 +208,9 @@ public:
         DrawStringDecal({236, 40}, "Highscores:", olc::YELLOW, {0.5f, 0.5f});
         for (int i = 0; i < 10; i++)
         {
-            DrawStringDecal({236, float((i*10)+80)}, std::to_string(highscores[i]), olc::YELLOW, {0.5f, 0.5f});
+            std::string sc = std::to_string(highscores[i]);
+            float SC = GetOffset(sc, 4);
+            DrawStringDecal({SC, float((i*10)+80)}, sc, olc::YELLOW, {0.5f, 0.5f});
         }
     }
 
@@ -225,9 +234,18 @@ public:
     {
         Clear(olc::BLACK);
         waiting = true;
-        DrawStringDecal({240, 115}, "New Game", olc::YELLOW, {0.5f, 0.5f});
-        DrawStringDecal({240, 135}, " Scores ", olc::YELLOW, {0.5f, 0.5f});
-        DrawStringDecal({240, 155}, "  Exit  ", olc::YELLOW, {0.5f, 0.5f});
+
+        std::string ng = "New Game";
+        std::string sc = "Scores";
+        std::string xt = "Exit";
+
+        float NG = GetOffset(ng, 4);
+        float SC = GetOffset(sc, 4);
+        float XT = GetOffset(xt, 4);
+
+        DrawStringDecal({NG, 115}, ng, olc::YELLOW, {0.5f, 0.5f});
+        DrawStringDecal({SC, 135}, sc, olc::YELLOW, {0.5f, 0.5f});
+        DrawStringDecal({XT, 155}, xt, olc::YELLOW, {0.5f, 0.5f});
 
         Draw({235, 116+(20*menu_index)}, olc::WHITE);
         Draw({236, 116+(20*menu_index)}, olc::WHITE);
@@ -237,14 +255,20 @@ public:
 
     void DrawCredits()
     {
+        std::string title = "G.o.G.o.L";
         std::string john = "In memory of John Conway.  Thank you for your contributions to this crazy thing we call life.";
         std::string javid = "Thanks to javidx9 for olcPixelGameEngine, and the many lessons he's taught.";
         std::string digits = "Written by ihave13digits with olcPixelGameEngine";
 
-        DrawStringDecal({220, 80}, "G.o.G.o.L", olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 2.0f});
-        DrawStringDecal({160, 140}, digits, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
-        DrawStringDecal({104, 160}, javid, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
-        DrawStringDecal({72, 180}, john, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
+        float tt = GetOffset(title, 8);
+        float jn = GetOffset(john, 4);
+        float jd = GetOffset(javid, 4);
+        float dg = GetOffset(digits, 4);
+
+        DrawStringDecal({tt, 80}, title, olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 2.0f});
+        DrawStringDecal({dg, 140}, digits, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
+        DrawStringDecal({jd, 160}, javid, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
+        DrawStringDecal({jn, 180}, john, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
     }
 
     void DrawIntro()
@@ -255,11 +279,21 @@ public:
             tick = 0;
             if (COLOR > 0)
             {
+                std::string title = "G.o.G.o.L";
+                std::string author = "by digits";
+                std::string flavor = "Powered by";
+                std::string engine = "olcPixelGameEngine";
+                
+                float tt = GetOffset(title, 8);
+                float au = GetOffset(author, 4);
+                float fl = GetOffset(flavor, 8);
+                float en = GetOffset(engine, 4);
+
                 Clear(olc::BLACK);
-                DrawStringDecal({220, 90}, "G.o.G.o.L", olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 2.0f});
-                DrawStringDecal({238, 110}, "by digits", olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
-                DrawStringDecal({216, 150}, "Powered by", olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 1.0f});
-                DrawStringDecal({220, 170}, "olcPixelGameEngine", olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
+                DrawStringDecal({tt, 90}, title, olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 2.0f});
+                DrawStringDecal({au, 110}, author, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
+                DrawStringDecal({fl, 150}, flavor, olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 1.0f});
+                DrawStringDecal({en, 170}, engine, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
                 COLOR--;
             }
             if (COLOR == 0)
@@ -268,6 +302,15 @@ public:
                 state = sMENU;
             }
         }
+    }
+
+    // Helper Routines
+
+    int GetOffset(std::string txt, int w)
+    {
+        int total = int(txt.length()*w);
+        float offset = width/2-total/2;
+        return offset;
     }
 
     // Matrix Routines
@@ -453,9 +496,18 @@ public:
             UpdateScores();
             state = sCREDIT;
         }
-        DrawStringDecal({220, 120}, "GAME OVER", olc::YELLOW, {1.0f, 1.0f});
-        DrawStringDecal({225, 140}, "Score: "+std::to_string(score), olc::WHITE, {0.5f, 0.5f});
-        DrawStringDecal({225, 150}, "Highscore: "+std::to_string(highscore), olc::WHITE, {0.5f, 0.5f});
+
+        std::string go = "GAME OVER";
+        std::string sc = "Score: "+std::to_string(score);
+        std::string hs = "Highscore: "+std::to_string(highscore);
+
+        float GO = GetOffset(go, 8);
+        float SC = GetOffset(sc, 4);
+        float HS = GetOffset(hs, 4);
+
+        DrawStringDecal({GO, 120}, go, olc::YELLOW, {1.0f, 1.0f});
+        DrawStringDecal({SC, 140}, sc, olc::WHITE, {0.5f, 0.5f});
+        DrawStringDecal({HS, 150}, hs, olc::WHITE, {0.5f, 0.5f});
     }
 
     // Game Logic
