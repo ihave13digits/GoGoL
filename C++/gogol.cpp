@@ -1,5 +1,6 @@
 #define OLC_PGE_APPLICATION
 #include "olcPixelGameEngine.h"
+#include "classes.h"
 
 class GameOfLife : public olc::PixelGameEngine
 {
@@ -11,68 +12,28 @@ public:
     
 public:
 
-    // Game Variables
-    bool safety = false;//      Shading Toggle
-    bool danger = false;//      Shading Toggle
-    bool paused = false;//      Game Updates
-    bool waiting = false;//     Menu Updates
-    float counter = 0.01;//     Score Updates
-    int begin_calc = 10;//      Frames To Skip
-    int state = 0;//            Game State
-    int level = 0;//            Game Level
-    int seed = 1;//             Game Seed
-    int tick = 0;//             Game Tick
-    int speed = 1;//            Tick Speed
-    int WIDTH = 512;//          Horizontal Cells (World)
-    int HEIGHT = 256;//         Vertical Cells (World)
-    int COLOR = 255;//          UI Color For Fading
-    int menu_index = 0;//       Selection Index
-    int YOFF = 20;//            Y Offset
-    
+    // Instance of Settings Container
+    Settings S = Settings();
+
+    // Instance of Level Data Container
+    Levels L = Levels();
+
+    // Instance of Spawner as Player
+    Spawner player = Spawner();
+
     // Game States
-    int sPLAY = 0;
-    int sSCORE = 1;
-    int sMENU = 2;
-    int sCREDIT = 3;
-    int sINTRO = 4;
-    int sHIGHS = 5;
-    int sEND = 6;
-    int sQUIT = 7;
+    enum GAMESTATES
+    {
+    sPLAY=0, sSCORE=1, sMENU=2, sCREDIT=3,
+    sINTRO=4, sHIGHS=5, sEND=6, sQUIT=7,
+    };
 
     // Level Data
-    int lCONDITION = 0;
-    int lIS_BLIND = 1;
-    int lMIN = 2;
-    int lMAX = 3;
-    int lTOL = 4;
-    int lW = 5;
-    int lH = 6;
-    int lTIME = 7;
-    int lDENSE = 8;
-    int lSIZE = 9;
-    int lSPEED = 10;
-    int lDIRECTION = 11;
-
-    // Game Levels
-    int total_levels = 15;
-    int game_level[15][12] = {
-        //CNDTN  BLIND    MIN     MAX      TOL    WIDTH   HEIGHT  TIME   DENSE    SIZE    SPD     DIR
-        //{   2,     0,     5000,   7500,    500,    512,    256,    45,     10,     3,      1,      0    },// test level
-        {   1,     0,     0,      0,       250,    512,    256,    15,     1,      0,      2,      0    },
-        {   0,     0,     0,      750,     250,    512,    256,    15,     1,      1,      2,      0    },
-        {   0,     1,     0,      500,     250,    512,    256,    15,     2,      0,      1,      0    },
-        {   0,     0,     0,      250,     250,    512,    256,    15,     3,      0,      1,      0    },
-        {   2,     0,     0,      500,     250,    512,    256,    15,     3,      0,      1,      0    },
-        {   1,     1,     750,    0,       250,    512,    256,    30,     4,      0,      1,      0    },
-        {   1,     0,     500,    0,       250,    512,    256,    30,     5,      1,      1,      0    },
-        {   2,     1,     500,    1000,    500,    512,    256,    30,     5,      0,      1,      0    },
-        {   0,     0,     0,      2000,    500,    512,    256,    30,     6,      1,      1,      0    },
-        {   2,     0,     2000,   3000,    500,    512,    256,    30,     7,      2,      1,      0    },
-        {   1,     0,     3000,   0,       500,    512,    256,    45,     8,      2,      1,      0    },
-        {   0,     1,     0,      5000,    500,    512,    256,    45,     9,      2,      1,      0    },
-        {   2,     0,     3000,   4000,    500,    512,    256,    45,     8,      3,      1,      0    },
-        {   2,     0,     5000,   7500,    500,    512,    256,    45,     10,     3,      1,      0    },
-        {   2,     0,     5500,   7500,    500,    512,    256,    60,     11,     4,      2,      0    }
+    enum LEVELDATA
+    {
+        lCONDITION=0, lIS_BLIND=1, lMIN=2, lMAX=3,
+        lTOL=4, lW=5, lH=6, lTIME=7,
+        lDENSE=8, lSIZE=9, lSPEED=10, lDIRECTION=11
     };
 
     // Level Variables
@@ -106,14 +67,6 @@ public:
         500
     };
 
-    // Player Variables
-    int X = 0;//                    Player Offset
-    int Y = 0;//                    Player Offset
-    int size = 0;//                 Player Size
-    int travel = 0;//               Player Speed
-    int direction = 0;//            Player Direction
-    int lives = 0;
-
     // Generational Matrices
     int matrix[512][256];//         matrix[width][height];
     int next[512][256];//           next[width][height];
@@ -121,7 +74,7 @@ public:
     bool OnUserCreate() override
     {
         CleanSlate();
-        state = sINTRO;
+        S.state = sINTRO;
         return true;
     }
 
@@ -130,7 +83,7 @@ public:
     void DrawMatrix()
     {
         Clear(olc::BLACK);
-        int offset = (size+1)*32;
+        int offset = (player.size+1)*32;
 
         if (!is_blind)
         {
@@ -140,9 +93,9 @@ public:
                 {
                     if (matrix[x][y])
                     {
-                        if (!danger && !safety) Draw(x, y+YOFF, olc::WHITE);
-                        if (danger) Draw(x, y+YOFF, olc::RED);
-                        if (safety) Draw(x, y+YOFF, olc::GREEN);
+                        if (!S.danger && !S.safety) Draw(x, y+S.YOFF, olc::WHITE);
+                        if (S.danger) Draw(x, y+S.YOFF, olc::RED);
+                        if (S.safety) Draw(x, y+S.YOFF, olc::GREEN);
                     }
                 }
             }
@@ -152,8 +105,8 @@ public:
         {
             for (int r = 0; r < 360; r+=1)
             {
-                int lx = X+((s)+1)*cos(r);
-                int ly = Y+((s)+1)*sin(r);
+                int lx = player.x+((s)+1)*cos(r);
+                int ly = player.y+((s)+1)*sin(r);
                 int grey;
                 if ((lx  > -1 && lx < width) && (ly  > -1 && ly < height))
                 {
@@ -161,9 +114,9 @@ public:
                     if (!is_blind) grey = int(255-(255/(s+1)));
                     if (matrix[lx][ly])
                     {
-                        if (safety) Draw(lx, ly+YOFF, olc::Pixel(0, grey, 0));
-                        if (danger) Draw(lx, ly+YOFF, olc::Pixel(grey, 0, 0));
-                        if (!danger && !safety) Draw(lx, ly+YOFF, olc::Pixel(grey, grey, grey));
+                        if (S.safety) Draw(lx, ly+S.YOFF, olc::Pixel(0, grey, 0));
+                        if (S.danger) Draw(lx, ly+S.YOFF, olc::Pixel(grey, 0, 0));
+                        if (!S.danger && !S.safety) Draw(lx, ly+S.YOFF, olc::Pixel(grey, grey, grey));
                     }
                 }
             }
@@ -172,7 +125,7 @@ public:
 
     void DrawScore()
     {
-        int value = int(points*counter);
+        int value = int(points*S.counter);
         if (points >= value)
         {
             if (value > 0)
@@ -188,7 +141,7 @@ public:
         }
         if (points <= 0)
         {
-            waiting = false; state = sPLAY;
+            S.waiting = false; S.state = sPLAY;
         }
         Clear(olc::BLACK);
 
@@ -200,7 +153,7 @@ public:
 
         DrawStringDecal({PT, 124}, pt, olc::YELLOW, {1.0f, 1.0f});
         DrawStringDecal({SC, 132}, sc, olc::YELLOW, {1.0f, 1.0f});
-        if (level > total_levels) state = sEND;
+        if (S.level > L.total_levels) S.state = sEND;
     }
 
     void DrawScores()
@@ -216,24 +169,31 @@ public:
 
     void DrawHUD()
     {
-        FillRect(0, 0, WIDTH, YOFF, olc::Pixel(16, 16, 16));
+        FillRect(0, 0, S.width, S.YOFF, olc::Pixel(16, 16, 16));
+        FillRect(0, S.height+S.YOFF, S.width, S.height+S.YEND, olc::Pixel(16, 16, 16));
         int pop = GetPop();
         std::string level_text;
         if (keep_above && !keep_between) level_text = "> "+std::to_string(minimum);
         if (!keep_above && !keep_between) level_text = "< "+std::to_string(maximum);
         if (keep_between) level_text = "> "+std::to_string(minimum)+" && < "+std::to_string(maximum);
+        level_text = level_text+" "+std::to_string(exceeded);
 
-        DrawStringDecal({0, 0}, "x"+std::to_string(lives), olc::WHITE, {1.5f, 1.5f});
-        DrawStringDecal({32, 0}, level_text, olc::YELLOW, {1.5f, 1.5f});
-        DrawStringDecal({416, 0}, "Score: "+std::to_string(points)+"/"+std::to_string(score), olc::WHITE, {0.5f, 0.5f});
-        DrawStringDecal({416, 5}, "Time Left: "+std::to_string(int(timer)), olc::WHITE, {0.5f, 0.5f});
-        DrawStringDecal({416, 10}, "Population: "+std::to_string(pop), olc::WHITE, {0.5f, 0.5f});
+        // Upper HUD
+        if (S.danger) DrawStringDecal({4, 4}, level_text, olc::RED, {1.5f, 1.5f});
+        if (S.safety) DrawStringDecal({4, 4}, level_text, olc::GREEN, {1.5f, 1.5f});
+        if (!S.danger && !S.safety) DrawStringDecal({4, 4}, level_text, olc::YELLOW, {1.5f, 1.5f});
+        DrawStringDecal({416, 4}, "Time Left: "+std::to_string(int(timer)), olc::WHITE, {0.5f, 0.5f});
+        DrawStringDecal({416, 12}, "Population: "+std::to_string(pop), olc::WHITE, {0.5f, 0.5f});
+    
+        // Lower HUD
+        DrawStringDecal({0, float(S.height+S.YOFF+1)}, "x"+std::to_string(player.lives), olc::WHITE, {1.0f, 1.0f});
+        DrawStringDecal({416, float(S.height+S.YOFF+1)}, "Score: "+std::to_string(points)+"/"+std::to_string(score), olc::WHITE, {1.0f, 1.0f});
     }
 
     void DrawMenu()
     {
         Clear(olc::BLACK);
-        waiting = true;
+        S.waiting = true;
 
         std::string ng = "New Game";
         std::string sc = "Scores";
@@ -247,10 +207,10 @@ public:
         DrawStringDecal({SC, 135}, sc, olc::YELLOW, {0.5f, 0.5f});
         DrawStringDecal({XT, 155}, xt, olc::YELLOW, {0.5f, 0.5f});
 
-        Draw({235, 116+(20*menu_index)}, olc::WHITE);
-        Draw({236, 116+(20*menu_index)}, olc::WHITE);
-        Draw({235, 117+(20*menu_index)}, olc::WHITE);
-        Draw({236, 117+(20*menu_index)}, olc::WHITE);
+        Draw({235, 116+(20*S.menu_index)}, olc::WHITE);
+        Draw({236, 116+(20*S.menu_index)}, olc::WHITE);
+        Draw({235, 117+(20*S.menu_index)}, olc::WHITE);
+        Draw({236, 117+(20*S.menu_index)}, olc::WHITE);
     }
 
     void DrawCredits()
@@ -265,19 +225,19 @@ public:
         float jd = GetOffset(javid, 4);
         float dg = GetOffset(digits, 4);
 
-        DrawStringDecal({tt, 80}, title, olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 2.0f});
-        DrawStringDecal({dg, 140}, digits, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
-        DrawStringDecal({jd, 160}, javid, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
-        DrawStringDecal({jn, 180}, john, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
+        DrawStringDecal({tt, 80}, title, olc::Pixel(S.color, S.color, S.color), {1.0f, 2.0f});
+        DrawStringDecal({dg, 140}, digits, olc::Pixel(S.color, S.color, S.color), {0.5f, 0.5f});
+        DrawStringDecal({jd, 160}, javid, olc::Pixel(S.color, S.color, S.color), {0.5f, 0.5f});
+        DrawStringDecal({jn, 180}, john, olc::Pixel(S.color, S.color, S.color), {0.5f, 0.5f});
     }
 
     void DrawIntro()
     {
-        tick++;
-        if (tick > speed)
+        S.tick++;
+        if (S.tick > S.speed)
         {
-            tick = 0;
-            if (COLOR > 0)
+            S.tick = 0;
+            if (S.color > 0)
             {
                 std::string title = "G.o.G.o.L";
                 std::string author = "by digits";
@@ -290,16 +250,16 @@ public:
                 float en = GetOffset(engine, 4);
 
                 Clear(olc::BLACK);
-                DrawStringDecal({tt, 90}, title, olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 2.0f});
-                DrawStringDecal({au, 110}, author, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
-                DrawStringDecal({fl, 150}, flavor, olc::Pixel(COLOR, COLOR, COLOR), {1.0f, 1.0f});
-                DrawStringDecal({en, 170}, engine, olc::Pixel(COLOR, COLOR, COLOR), {0.5f, 0.5f});
-                COLOR--;
+                DrawStringDecal({tt, 90}, title, olc::Pixel(S.color, S.color, S.color), {1.0f, 2.0f});
+                DrawStringDecal({au, 110}, author, olc::Pixel(S.color, S.color, S.color), {0.5f, 0.5f});
+                DrawStringDecal({fl, 150}, flavor, olc::Pixel(S.color, S.color, S.color), {1.0f, 1.0f});
+                DrawStringDecal({en, 170}, engine, olc::Pixel(S.color, S.color, S.color), {0.5f, 0.5f});
+                S.color--;
             }
-            if (COLOR == 0)
+            if (S.color == 0)
             {
-                COLOR = 255;
-                state = sMENU;
+                S.color = 255;
+                S.state = sMENU;
             }
         }
     }
@@ -328,7 +288,7 @@ public:
 
     void Randomize()
     {
-        srand(seed);
+        srand(S.seed);
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
@@ -425,61 +385,61 @@ public:
         if (!passed)
         {
             points = 0;
-            lives--;
-            if (lives < 0) state = sEND;
+            player.lives--;
+            if (player.lives < 0) S.state = sEND;
         }
         if (passed)
         {
-            if (exceeded == 0) lives++;
-            level++;
-            state = sSCORE;
+            if (exceeded == 0) player.lives++;
+            S.level++;
+            S.state = sSCORE;
         }
         exceeded = 0;
-        if (level < total_levels)
+        if (S.level < L.total_levels)
         {
-            if (game_level[level][lCONDITION] == 0) keep_above = false; keep_between = false;
-            if (game_level[level][lCONDITION] == 1) keep_above = true; keep_between = false;
-            if (game_level[level][lCONDITION] == 2) keep_between = true;
-            is_blind = bool(game_level[level][lIS_BLIND]);
-            minimum = game_level[level][lMIN];
-            maximum = game_level[level][lMAX];
-            tolerance = game_level[level][lTOL];
-            density = game_level[level][lDENSE];
-            timer = float(game_level[level][lTIME]);
+            if (L.game_level[S.level][lCONDITION] == 0) keep_above = false; keep_between = false;
+            if (L.game_level[S.level][lCONDITION] == 1) keep_above = true; keep_between = false;
+            if (L.game_level[S.level][lCONDITION] == 2) keep_between = true;
+            is_blind = bool(L.game_level[S.level][lIS_BLIND]);
+            minimum = L.game_level[S.level][lMIN];
+            maximum = L.game_level[S.level][lMAX];
+            tolerance = L.game_level[S.level][lTOL];
+            density = L.game_level[S.level][lDENSE];
+            timer = float(L.game_level[S.level][lTIME]);
 
-            size = game_level[level][lSIZE];
-            speed = game_level[level][lSPEED];
-            direction = game_level[level][lDIRECTION];
-            X = int(game_level[level][lW]/2);
-            Y = int(game_level[level][lH]/2);
+            player.size = L.game_level[S.level][lSIZE];
+            S.speed = L.game_level[S.level][lSPEED];
+            player.direction = L.game_level[S.level][lDIRECTION];
+            player.x = int(L.game_level[S.level][lW]/2);
+            player.y = int(L.game_level[S.level][lH]/2);
 
             ClearMatrix();
             Randomize();
         }
-        else state = sSCORE;
+        else S.state = sSCORE;
     }
 
     void CleanSlate()
     {
-        lives = 1;
-        speed = 0;
+        player.lives = 1;
+        S.speed = 0;
         points = 0;
         score = 0;
         highscore = 0;
-        level = 0;
+        S.level = 0;
     }
 
     void StartGame()
     {
         CleanSlate();
-        state = sPLAY;
+        S.state = sPLAY;
         StartLevel(false);
     }
 
     void EndGame()
     {
         Clear(olc::BLACK);
-        int value = int(score*counter);
+        int value = int(score*S.counter);
         if (score > value && value > 0)
         {
             highscore += value;
@@ -492,9 +452,9 @@ public:
         }
         if (score == 0)
         {
-            waiting = false;
+            S.waiting = false;
             UpdateScores();
-            state = sCREDIT;
+            S.state = sCREDIT;
         }
 
         std::string go = "GAME OVER";
@@ -516,9 +476,9 @@ public:
         bool passed = false;
         int pop = GetPop();
         // Check Level Conditions
-        danger = false;
-        safety = false;
-        if (generations > begin_calc)
+        S.danger = false;
+        S.safety = false;
+        if (generations > S.begin_calc)
         {
             if (keep_above && !keep_between)
             {
@@ -526,13 +486,13 @@ public:
                 {
                     if (points > 0) points--;
                     if (exceeded < tolerance) exceeded++;
-                    danger = true;
+                    S.danger = true;
                 }
                 if (pop < int(minimum+(minimum/3)))
                 {
                     if (exceeded > 0) exceeded--;
                     points++;
-                    safety = true;
+                    S.safety = true;
                 }
             }
             if (!keep_above && !keep_between)
@@ -541,13 +501,13 @@ public:
                 {
                     if (points > 0) points--;
                     if (exceeded < tolerance) exceeded++;
-                    danger = true;
+                    S.danger = true;
                 }
                 if (pop > int(maximum/3) && pop < int(maximum-(maximum/3)))
                 {
                     if (exceeded > 0) exceeded--;
                     points++;
-                    safety = true;
+                    S.safety = true;
                 }
             }
             if (keep_between)
@@ -557,13 +517,13 @@ public:
                 {
                     if (points > 0) points--;
                     if (exceeded < tolerance) exceeded++;
-                    danger = true;
+                    S.danger = true;
                 }
                 if (pop > int(minimum+(diff/3)) && pop < int(maximum-(diff/3)))
                 {
                     if (exceeded > 0) exceeded--;
                     points++;
-                    safety = true;
+                    S.safety = true;
                 }
             }
         }
@@ -571,9 +531,9 @@ public:
         if (timer < 0.0f) StartLevel(passed);
 
         // Game Updates
-        if (tick > speed)
+        if (S.tick > S.speed)
         {
-            if (generations > begin_calc)
+            if (generations > S.begin_calc)
             {
                 int value = 0;
                 // Update Potential Score
@@ -583,86 +543,102 @@ public:
                 points += value;
             }
             // Update Game
-            tick = 0;
+            S.tick = 0;
             Progress();
             DrawMatrix();
         }
         // Player Updates
-        if (tick > travel)
+        if (S.tick > player.travel)
         {
-            if (direction == 0 && X < width-size-1) X++;
-            if (direction == 2 && X > size) X--;
-            if (direction == 1 && Y < height-size-1) Y++;
-            if (direction == 3 && Y > size) Y--;
+            if (player.direction == 0)
+            {
+                if (player.x < width-player.size-1) player.x++;
+                if (player.x == width-player.size-1) StartLevel(false);
+            }
+            if (player.direction == 2)
+            {
+                if (player.x > player.size) player.x--;
+                if (player.x == player.size) StartLevel(false);
+            }
+            if (player.direction == 1)
+            {
+                if (player.y < height-player.size-1) player.y++;
+                if (player.y == height-player.size-1) StartLevel(false);
+            }
+            if (player.direction == 3)
+            {
+                if (player.y > player.size) player.y--;
+                if (player.y == player.size) StartLevel(false);
+            }
         }
         // Draw Player
-        for (int s = 0; s < size; s++)
+        for (int s = 0; s < player.size; s++)
         {
             for (int r = 0; r < 360; r++)
             {
-                int lx = X+(s+1)*cos(r);
-                int ly = Y+(s+1)*sin(r);
-                int mod = int(s*(size+1));
+                int lx = player.x+(s+1)*cos(r);
+                int ly = player.y+(s+1)*sin(r);
+                int mod = int(s*(player.size+1));
                 matrix[lx][ly] = true;
-                Draw(lx, ly+YOFF, olc::Pixel(255-mod, 255-mod, 255-mod, 255-mod*32));
+                Draw(lx, ly+S.YOFF, olc::Pixel(255-mod, 255-mod, 255-mod, 255-mod*32));
             }
         }
-        matrix[X][Y] = true; Draw(X, Y+YOFF, olc::WHITE);
+        matrix[player.x][player.y] = true; Draw(player.x, player.y+S.YOFF, olc::WHITE);
         DrawHUD();
     }
 
     void UpdateGame(float delta)
     {
         // Increment Game Tick
-        if (!paused) tick++;
+        if (!S.paused) S.tick++;
 
-        if (state == sPLAY)
+        if (S.state == sPLAY)
         {
             // Update Timeout
-            if (!paused) timer -= delta;
+            if (!S.paused) timer -= delta;
             GameFrame();
         }
 
-        if (state == sSCORE)
+        if (S.state == sSCORE)
         {
             DrawScore();
-            if (waiting) timer -= delta;
+            if (S.waiting) timer -= delta;
         }
-        if (state == sMENU)
+        if (S.state == sMENU)
         {
             DrawMenu();
-            if (waiting)
+            if (S.waiting)
             {
-                if (GetKey(olc::Key::W).bPressed || GetKey(olc::Key::UP).bPressed) if (menu_index > 0) menu_index -= 1;
-                if (GetKey(olc::Key::S).bPressed || GetKey(olc::Key::DOWN).bPressed) if (menu_index < 2) menu_index += 1;
+                if (GetKey(olc::Key::W).bPressed || GetKey(olc::Key::UP).bPressed) if (S.menu_index > 0) S.menu_index -= 1;
+                if (GetKey(olc::Key::S).bPressed || GetKey(olc::Key::DOWN).bPressed) if (S.menu_index < 2) S.menu_index += 1;
                 
                 if (GetKey(olc::Key::ENTER).bPressed)
                 {
-                    if (menu_index == 0) state = sPLAY; StartGame();
-                    if (menu_index == 1) state = sHIGHS;
-                    if (menu_index == 2) state = sQUIT;
+                    if (S.menu_index == 0) S.state = sPLAY; StartGame();
+                    if (S.menu_index == 1) S.state = sHIGHS;
+                    if (S.menu_index == 2) S.state = sQUIT;
                 }
             }
         }
-        if (state == sHIGHS)
+        if (S.state == sHIGHS)
         {
             DrawScores();
-            if (waiting)
+            if (S.waiting)
             {
-                if (GetKey(olc::Key::ENTER).bReleased) state = sMENU;
+                if (GetKey(olc::Key::ENTER).bReleased) S.state = sMENU;
             }
         }
-        if (state == sINTRO)
+        if (S.state == sINTRO)
         {
             DrawIntro();
-            if (GetKey(olc::Key::ENTER).bReleased) COLOR = 1;
+            if (GetKey(olc::Key::ENTER).bReleased) S.color = 1;
         }
-        if (state == sCREDIT)
+        if (S.state == sCREDIT)
         {
             DrawCredits();
-            if (GetKey(olc::Key::ENTER).bReleased) state = sMENU;
+            if (GetKey(olc::Key::ENTER).bReleased) S.state = sMENU;
         }
-        if (state == sEND)
+        if (S.state == sEND)
         {
             EndGame();
         }
@@ -673,18 +649,18 @@ public:
         // Pause Game
         if (GetKey(olc::Key::P).bPressed)
         {
-            if (paused) paused = false;
-            else paused = true;
+            if (S.paused) S.paused = false;
+            else S.paused = true;
         }
         // Set Player Direction
-        if (GetKey(olc::Key::D).bPressed || GetKey(olc::Key::RIGHT).bPressed) direction = 0;
-        if (GetKey(olc::Key::S).bPressed || GetKey(olc::Key::DOWN).bPressed) direction = 1;
-        if (GetKey(olc::Key::A).bPressed || GetKey(olc::Key::LEFT).bPressed) direction = 2;
-        if (GetKey(olc::Key::W).bPressed || GetKey(olc::Key::UP).bPressed) direction = 3;
+        if (GetKey(olc::Key::D).bPressed || GetKey(olc::Key::RIGHT).bPressed) player.direction = 0;
+        if (GetKey(olc::Key::S).bPressed || GetKey(olc::Key::DOWN).bPressed) player.direction = 1;
+        if (GetKey(olc::Key::A).bPressed || GetKey(olc::Key::LEFT).bPressed) player.direction = 2;
+        if (GetKey(olc::Key::W).bPressed || GetKey(olc::Key::UP).bPressed) player.direction = 3;
         // Update Game Loop
         UpdateGame(fElapsedTime);
         // Quit
-        if (state == sQUIT) return false;
+        if (S.state == sQUIT) return false;
         return !GetKey(olc::Key::ESCAPE).bPressed;
     }
 };
@@ -694,7 +670,7 @@ public:
 int main()
 {
     GameOfLife GOL;
-    if (GOL.Construct(512, 276, 2, 2, false, false))
+    if (GOL.Construct(512, 288, 2, 2, false, false))
         GOL.Start();
 
     return 0;
